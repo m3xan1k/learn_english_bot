@@ -1,0 +1,7 @@
+__pycache__/
+.vscode/
+Pipfile
+Pipfile.lock
+.env
+test.db
+test.py
