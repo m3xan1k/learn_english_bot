@@ -3,7 +3,7 @@ import os
 
 API_TOKEN = os.environ.get('API_TOKEN')
 BASE_URL = f'https://api.telegram.org/bot{API_TOKEN}/'
-HTTP_TIMEOUT = 5
+HTTP_TIMEOUT = 15
 
 PROXY_LOGIN = os.environ.get('PROXY_LOGIN')
 PROXY_PASS = os.environ.get('PROXY_PASS')

@@ -1,0 +1,7 @@
+Tasks:
+-[ ] refactor some duplicated stuff, move some static helper functions to separate module
+-[ ] possibility to upload array of 'pairs', maybe with file?
+-[ ] serve user's answers
+-[ ] setup celery for schedulled messages
+-[ ] dockerize with postgres or mysql
+ 
