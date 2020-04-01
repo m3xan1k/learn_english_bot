@@ -101,6 +101,7 @@ class Bot:
         command_mapper = {
             '/create_pair': self.create_pair,
             '/update_pair': self.update_pair,
+            '/delete_pair': self.delete_pair,
             '/show_dict': self.show_dictionary,
         }
 
@@ -157,6 +158,31 @@ class Bot:
         if result:
             return 'Updated'
         return 'Not updated'
+
+    def delete_pair(self, chat_id: int, user_name: str, message: str) -> str:
+        """
+        Delete pair of words for user
+        """
+        command, *pair = message.split()
+        if len(pair) != 2:
+            return "'/delete_pair' command takes 2 args(russian and english word)"
+        pair: List[str] = [word.lower().strip() for word in pair]
+        try:
+            User.get(chat_id=chat_id)
+        except User.DoesNotExist:
+            return 'You dont have a dictionary to delete yet'
+        russian, english = self.determine_language_pairs(pair)
+        pair = (
+            Pair.select()
+            .where((Pair.russian_word ** russian) & (Pair.english_word ** english))
+            .first()
+        )
+        if pair:
+            result: int = pair.delete_instance()
+            if result:
+                return 'Deleted'
+            return 'Not deleted'
+        return 'Pair not found'
 
     @staticmethod
     def determine_language_pairs(pair: list) -> tuple:
