@@ -19,6 +19,24 @@ telegram_adapter = HTTPAdapter(max_retries=3)
 session = requests.Session()
 session.mount('https://api.telegram.org', telegram_adapter)
 
+HELP_MESSAGE = """
+    This bot helps you to learn new english/russian words by adding new pairs of words.
+    You'll get notifications with questions you can answer them and bot will check if \
+        your answer if correct.
+    All interaction with bot is build on paradigms of commands.
+    It reminds a REST API(for developers).
+    Available commands:
+    '/create_pair <english> <russian>' — creates a 'pair' of words and saves it to your \
+        dictionary, order of words in 'pair' is not sensitive, bot will try to handle \
+        detection of language
+    '/update_pair <english> <russian>' — updates existing 'pair' in your dictionary
+    '/delete_pair <english> <russian>' — deletes existing 'pair' from your dictionary
+    '/show_dict' — displays all your dictionary
+    '/answer <english> <russian>' — answer to bot's question, than you'll get a feedback \
+        are you right or wrong
+    '/help' — displays this help message
+    """
+
 
 @unique
 class BotApiUrl(Enum):
@@ -84,6 +102,7 @@ class Bot:
             '/delete_pair': self.delete_pair,
             '/show_dict': self.show_dictionary,
             '/answer': self.answer,
+            '/help': self.help,
         }
 
         return command_mapper.get(command)
@@ -209,6 +228,10 @@ class Bot:
         return f"You're wrong {user_name or ''}! {english} is '{russian}' in Russian."
 
     @staticmethod
+    def help(*args, **kwargs):
+        return HELP_MESSAGE
+
+    @staticmethod
     def determine_language_pairs(pair: list) -> tuple:
         dictionary_map = {
             'ru': None,
@@ -236,9 +259,11 @@ class Bot:
         while True:
             response = self.get_updates(offset)
             if not response:
-                break
+                print('No response')
+                continue
             updates: dict = response.json()
             if not updates.get('ok'):
+                print('not ok')
                 print(updates)
                 break
             result: list = updates.get('result')
@@ -250,9 +275,11 @@ class Bot:
                 message_text = update['message']['text']
                 user_name = self.get_user_name(update['message'])
                 action = self.dispatch_message(message_text)
+                if not action:
+                    return 'Wrong action'
                 answer = action(chat_id, user_name, message_text)
                 response = self.send_message(chat_id, answer)
-                print(response.status_code, response.json())
+                # print(response.status_code, response.json())
 
 
 if __name__ == '__main__':
