@@ -13,7 +13,7 @@ PROXY_PORT = os.environ.get('PROXY_PORT')
 USE_PROXY = True
 
 if USE_PROXY:
-    if not any([PROXY_LOGIN, PROXY_PASS, PROXY_HOST, PROXY_PORT]):
+    if not all([PROXY_LOGIN, PROXY_PASS, PROXY_HOST, PROXY_PORT]):
         raise NotImplementedError('Proxy settings not provided')
     PROXY = {
         'http': f'socks5://{PROXY_LOGIN}:{PROXY_PASS}@{PROXY_HOST}:{PROXY_PORT}',
