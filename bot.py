@@ -87,28 +87,33 @@ class Bot:
         Decides what to do with the message, returns action(function)
         """
         if message.startswith('/'):
-            return self.map_command(message)
+            command, *_ = message.split()
+            print(command)
+            return self.map_command(command)
         words = message.split()
         if len(words) == 1:
             pass
-        elif len(words) == 2:
-            return self.save_pair
 
     def map_command(self, command: str) -> callable:
         """
         Maps command-message to action(function)
         """
         command_mapper = {
+            '/create_pair': self.create_pair,
+            '/update_pair': self.update_pair,
             '/show_dict': self.show_dictionary,
         }
 
         return command_mapper.get(command)
 
-    def save_pair(self, chat_id: int, user_name: str, message: list) -> str:
+    def create_pair(self, chat_id: int, user_name: str, message: str) -> str:
         """
         Saves new pair of words and binds it to user
         """
-        pair = message.split()
+        command, *pair = message.split()
+        if len(pair) != 2:
+            return "'/create_pair' command takes 2 args(russian and english word)"
+        pair: List[str] = [word.lower().strip() for word in pair]
         russian, english = self.determine_language_pairs(pair)
         try:
             user = User.get(chat_id=chat_id)
@@ -122,6 +127,36 @@ class Bot:
         if status:
             return 'Created'
         return 'Exist'
+
+    def update_pair(self, chat_id: int, user_name: str, message: str) -> str:
+        """
+        Updates pair of words for user
+        """
+        command, *pair = message.split()
+        if len(pair) != 2:
+            return "'/update_pair' command takes 2 args(russian and english word)"
+        pair: List[str] = [word.lower().strip() for word in pair]
+        try:
+            User.get(chat_id=chat_id)
+        except User.DoesNotExist:
+            return 'You dont have a dictionary to update yet'
+        old_pair = (
+            Pair
+            .select()
+            .where((Pair.russian_word << pair) | (Pair.english_word << pair))
+            .join(UserPair)
+            .join(User)
+            .where(User.chat_id == chat_id).first()
+        )
+        if not old_pair:
+            return 'Pair not found'
+        russian, english = self.determine_language_pairs(pair)
+        old_pair.russian_word = russian
+        old_pair.english_word = english
+        result = old_pair.save()
+        if result:
+            return 'Updated'
+        return 'Not updated'
 
     @staticmethod
     def determine_language_pairs(pair: list) -> tuple:
